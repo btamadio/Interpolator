@@ -105,19 +105,25 @@ class interpolator:
                 for c in cont:
                     self.yieldGraphs.append(c.Clone('yieldGraph_'+str(k)))
             self.yieldGraphs[k] = self.trimGraph(self.yieldGraphs[k])
-            print self.yieldGraphs[k]
-    def trimGraph(self,g):
-        xarr = []
-        yarr = []
+    def trimGraph(self,g,p=False):
+        pointArr = []
+        #xarr = []
+        #yarr = []
         for iPoint in range(g.GetN()):
             x,y=ROOT.Double(0),ROOT.Double(0)
             g.GetPoint(iPoint,x,y)
-            if x < 1200 or (x < 1400 and y > 1000) or (x < 1600 and y >1200) or (x < 1800 and y > 1400):
+            if x < 1000 or (x < 1200 and y > 850) or (x < 1400 and y > 1050) or (x < 1600 and y >1250) or (x < 1800 and y > 1450):
                 pass
             else:
-                xarr.append(x)
-                yarr.append(y)
-        if len(xarr) > 0:
+                pointArr.append((x,y))
+                if p:
+                    print iPoint,x,y
+                #xarr.append(x)
+                #yarr.append(y)
+        if len(pointArr) > 0:
+            #pointArr.sort(key=lambda x:x[0])
+            xarr = [ p[0] for p in pointArr ]
+            yarr = [ p[1] for p in pointArr ]
             return ROOT.TGraph(len(xarr),array.array('d',xarr),array.array('d',yarr))
         else:
             return 0
@@ -141,7 +147,7 @@ class interpolator:
                 result = x,y
         return result
 
-    def makeLimitHist(self,index,uncert=0.1):
+    def makeLimitHist(self,index,uncert=0.3):
         self.limitHist_1sig = self.yieldHists[index].Clone('limit_1sig_'+str(index))
         self.limitHist_2sig = self.yieldHists[index].Clone('limit_2sig_'+str(index))
         centVal = self.contours[index]
@@ -173,33 +179,20 @@ class interpolator:
             for c in cont:
                 self.limitConts_2sig.append(c.Clone('cont_2sig_'+str(ci)))
                 ci+=1
-        self.limit_nom = self.trimGraph(self.limitConts_1sig[1])
+        self.limit_nom = self.trimGraph(self.limitConts_1sig[1],True)
         self.limit_1up = self.trimGraph(self.limitConts_1sig[0])
         self.limit_1down = self.trimGraph(self.limitConts_1sig[2])
         self.limit_2up = self.trimGraph(self.limitConts_2sig[0])
         self.limit_2down = self.trimGraph(self.limitConts_2sig[2])
         self.canvas.Clear()
         self.limit_2up.SetFillColor(ROOT.kGreen)
-        self.limit_1up.SetFillColor(ROOT.kYellow)
-        self.limit_nom.SetFillColor(ROOT.kYellow)
-        self.limit_nom.SetLineColor(ROOT.kBlack)
-        self.limit_1down.SetFillColor(ROOT.kGreen)
-        self.limit_1down.SetLineColor(ROOT.kBlack)
-        self.limit_2down.SetFillColor(ROOT.kBlack)
-        
-        maxXY_2up = self.getMaxXY(self.limit_2up)
-        maxXY_1down = self.getMaxXY(self.limit_1down)
 
-#        self.limit_2down.SetPoint(self.limit_2down.GetN(),maxXY_1down[0],maxXY_1down[1])
-#        self.limit_2down.SetPoint(self.limit_2down.GetN(),maxXY_2up[0],maxXY_2up[1])
-#        self.limit_2down.SetPoint(self.limit_2down.GetN(),850,maxXY_2up[1])
-        
 parser = argparse.ArgumentParser(add_help=False, description='Plot Yields')
 parser.add_argument('input')
 parser.add_argument('--model',dest='model',type=str,default='RPV10')
 args = parser.parse_args()
 foo = interpolator(args.input)    
-foo.makeLimitHist(14,0.05)
+foo.makeLimitHist(14,0.15)
 foo.write()
 
 ROOT.gROOT.LoadMacro('~/atlasstyle/AtlasStyle.C')
@@ -207,10 +200,15 @@ ROOT.gROOT.LoadMacro('~/atlasstyle/AtlasLabels.C')
 ROOT.SetAtlasStyle()
 ROOT.gStyle.SetPaintTextFormat('2.3f')
 
-hists_m4_b1 = foo.yieldHists[0:5]
-hists_m4_b9 = foo.yieldHists[5:10]
-hists_m5_b1 = foo.yieldHists[10:15]
-hists_m5_b9 = foo.yieldHists[15:20]
+#hists_m4_b1 = foo.yieldHists[0:5]
+#hists_m4_b9 = foo.yieldHists[5:10]
+#hists_m5_b1 = foo.yieldHists[10:15]
+#hists_m5_b9 = foo.yieldHists[15:20]
+
+hists_m4_b1 = foo.yieldGraphs[0:5]
+hists_m4_b9 = foo.yieldGraphs[5:10]
+hists_m5_b1 = foo.yieldGraphs[10:15]
+hists_m5_b9 = foo.yieldGraphs[15:20]
 cols = [ROOT.kRed,ROOT.kGreen,ROOT.kBlue,ROOT.kViolet,ROOT.kCyan]
 labs = ['MJ > 600 GeV','MJ > 650 GeV','MJ > 700 GeV','MJ > 750 GeV','MJ > 800 GeV']
 leg = ROOT.TLegend(0.75,0.65,0.8,0.9)
@@ -219,30 +217,49 @@ leg.SetFillStyle(0)
 leg.SetTextSize(0.03)
 lumiLatex=ROOT.TLatex()
 
+for i in range(len(hists_m5_b1)):
+    leg.AddEntry(hists_m5_b1[i],labs[i],'l')
+
 c1=ROOT.TCanvas('c1','c1',800,600)
+drawn=False
 for i in range(len(hists_m4_b1)):
-    leg.AddEntry(hists_m4_b1[i],labs[i],'l')
+    if hists_m4_b1[i] == 0:
+        continue
+
     hists_m4_b1[i].SetLineColor(cols[i])
     hists_m4_b1[i].SetLineWidth(2)
-    if i == 0:
-        hists_m4_b1[i].Draw('cont3')
+    if not drawn:
+        drawn=True
+        hists_m4_b1[i].Draw('AL')
+        hists_m4_b1[i].GetXaxis().SetLimits(700,2200)
+        hists_m4_b1[i].GetYaxis().SetRangeUser(0,1600)
+        c1.Modified()
+        c1.Update()
     else:
-        hists_m4_b1[i].Draw('cont3 same')
-    hists_m4_b1[i].GetXaxis().SetRangeUser(1200,2000)
+        hists_m4_b1[i].Draw('L')
+
 ROOT.ATLASLabel(0.2,0.85,'Internal')
 lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 4}{b-tag}')
 leg.Draw()
 
 c2=ROOT.TCanvas('c2','c2',800,600)
+drawn=False
 for i in range(len(hists_m4_b9)):
+    if hists_m4_b9[i] == 0:
+        continue
     hists_m4_b9[i].SetLineColor(cols[i])
     hists_m4_b9[i].SetLineWidth(2)
-    if i == 0:
-        hists_m4_b9[i].Draw('cont3')
+    if not drawn:
+        drawn=True
+        hists_m4_b9[i].Draw('AL')
+        hists_m4_b9[i].GetXaxis().SetLimits(700,2200)
+        hists_m4_b9[i].GetYaxis().SetRangeUser(0,1600)
+        c2.Modified()
+        c2.Update()
     else:
-        hists_m4_b9[i].Draw('cont3 same')
-    hists_m4_b9[i].GetXaxis().SetRangeUser(1200,2000)
+        hists_m4_b9[i].Draw('L')
+
 ROOT.ATLASLabel(0.2,0.85,'Internal')
 lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 4}{b-inclusive}')
@@ -250,13 +267,19 @@ leg.Draw()
 
 c3=ROOT.TCanvas('c3','c3',800,600)
 for i in range(len(hists_m5_b1)):
+    if hists_m5_b1[i] == 0:
+        continue
     hists_m5_b1[i].SetLineColor(cols[i])
     hists_m5_b1[i].SetLineWidth(2)
     if i == 0:
-        hists_m5_b1[i].Draw('cont3')
+        hists_m5_b1[i].Draw('AL')
+        hists_m5_b1[i].GetXaxis().SetLimits(800,2200)
+        hists_m5_b1[i].GetYaxis().SetRangeUser(0,1600)
+        c3.Modified()
+        c3.Update()
     else:
-        hists_m5_b1[i].Draw('cont3 same')
-    hists_m5_b1[i].GetXaxis().SetRangeUser(1200,2000)
+        hists_m5_b1[i].Draw('L')
+
 ROOT.ATLASLabel(0.2,0.85,'Internal')
 lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 5}{b-tag}')
@@ -264,35 +287,74 @@ leg.Draw()
 
 c4=ROOT.TCanvas('c4','c4',800,600)
 for i in range(len(hists_m5_b9)):
+    if hists_m5_b9[i] == 0:
+        continue
     hists_m5_b9[i].SetLineColor(cols[i])
     hists_m5_b9[i].SetLineWidth(2)
     if i == 0:
-        hists_m5_b9[i].Draw('cont3')
+        hists_m5_b9[i].Draw('AL')
+        hists_m5_b9[i].GetXaxis().SetLimits(700,2200)
+        hists_m5_b9[i].GetYaxis().SetRangeUser(0,1600)
+        c4.Modified()
+        c4.Update()
     else:
-        hists_m5_b9[i].Draw('cont3 same')
-    hists_m5_b9[i].GetXaxis().SetRangeUser(1200,2000)
+        hists_m5_b9[i].Draw('L')
 ROOT.ATLASLabel(0.2,0.85,'Internal')
 lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 5}{b-inclusive}')
 leg.Draw()
 
 c5 = ROOT.TCanvas('c5','c5',800,600)
-foo.limit_2up.Draw('AFL')
-c5.Modified()
-#foo.limit_2up.GetXaxis().SetRangeUser(1200,2000)
-#c5.Update()
-foo.limit_1up.Draw('FL')
-foo.limit_nom.Draw('FL')
-
-foo.limit_1down.Draw('FL')
-foo.limit_nom.Draw('L')
-foo.limit_2down.Draw('FL')
-
-
-foo.limit_2up.GetXaxis().SetLimits(800,1800)
-foo.limit_2up.GetXaxis().SetTitle('m_{#tilde{g}} [GeV]')
-foo.limit_2up.GetYaxis().SetTitle('m_{#tilde{#chi}} [GeV]')
-
+foo.limit_1up.SetFillColor(5)
+foo.limit_1up.Draw('aF')
+foo.limit_1up.GetXaxis().SetLimits(700,2200)
+foo.limit_1up.GetYaxis().SetRangeUser(0,1600)
+foo.limit_1down.SetFillColor(10)
+foo.limit_1down.Draw('Fsame')
+foo.limit_nom.Draw('lsame')
 ROOT.ATLASLabel(0.2,0.85,'Internal')
 lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
-lumiLatex.DrawLatexNDC(0.7,0.3,'#splitline{#splitline{n_{jet}#geq 5}{b-tag}}{MJ > 800 GeV}')
+lumiLatex.DrawLatexNDC(0.65,0.4,'#splitline{#splitline{n_{jet}#geq 5}{b-tag}}{MJ > 800 GeV}')
+line = ROOT.TLine()
+line.SetLineColor(ROOT.kWhite)
+line.SetLineWidth(3)
+line.DrawLine(1000,268.882177216,1000,828.200665761)
+line.DrawLine(1000,828.200665761,1006.35299758,850)
+x1  =1006.35299758
+y1 = 850
+x3 = 1200.0
+y3 = 946.644554518
+x2 = 1190
+y2=y1+(x2-x1)*(y3-y1)/(x3-x1)
+
+
+line.SetLineColor(ROOT.kWhite)
+line.DrawLine(x1,y1,x2,y2)
+
+
+c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/each_RPV10_m4_b1_dy14_95CL.pdf')
+c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m4_b9_dy14_95CL.pdf')
+c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b1_dy14_95CL.pdf')
+c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b9_dy14_95CL.pdf')
+c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b1_dy14_mj800_95CL_1sigmaband.pdf')
+
+# c5 = ROOT.TCanvas('c5','c5',800,600)
+# foo.limit_2up.Draw('AFL')
+# c5.Modified()
+# #foo.limit_2up.GetXaxis().SetRangeUser(1200,2000)
+# #c5.Update()
+# foo.limit_1up.Draw('FL')
+# foo.limit_nom.Draw('FL')
+
+# foo.limit_1down.Draw('FL')
+# foo.limit_nom.Draw('L')
+# foo.limit_2down.Draw('FL')
+
+
+# foo.limit_2up.GetXaxis().SetLimits(800,1800)
+# foo.limit_2up.GetXaxis().SetTitle('m_{#tilde{g}} [GeV]')
+# foo.limit_2up.GetYaxis().SetTitle('m_{#tilde{#chi}} [GeV]')
+
+# ROOT.ATLASLabel(0.2,0.85,'Internal')
+# lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+# lumiLatex.DrawLatexNDC(0.7,0.3,'#splitline{#splitline{n_{jet}#geq 5}{b-tag}}{MJ > 800 GeV}')
