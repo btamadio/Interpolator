@@ -4,21 +4,21 @@ from pointDict import pointDict
 from massDict import massDict
 class interpolator:
     def __init__(self,fileName):
-        #Number of events needed for 3sigma observation
-        #self.contours = [43.1,30.3,23.9,18.2,13.8,68.0,48.9,36.0,27.5,20.5,10.0,7.5,6.1,4.4,3.7,14.9,11.0,9.1,7.1,5.7]
-        #for RPV10, optimal SR is njet >=5, b-tag, MJ > 800
-        #this correspond to self.contours[14] = 2.8
+        #3 sigma
+#        self.contours =[ 50.9, 40.9, 30.5, 24.2, 19.6, 85.6, 66.0, 48.0, 37.6, 30.4, 11.5, 9.4, 7.5, 6.1, 4.4, 17.3, 13.9, 11.5, 9.5, 7.7]
 
         #95% CL
-        self.contours = [63.1,42.2,30.1,22.4,17.6,129.9,83.2,57.9,41.1,29.4,11.2,10.0,8.6,7.5,6.7,16.3,13.9,12.0,10.1,9.0]
-        #3sigma
-        #self.contours = [74.4,48.5,33.4,23.8,17.8,157.2,99.2,68.0,47.1,32.6,9.6,8.0,6.0,4.2,2.8,16.1,13.0,10.6,8.1,6.6]
+        self.contours =[48.8,39.0,30.1,24.2,19.7,
+                        98.9,69.9,51.5,38.1,29.1,
+                        12.7,11.2,9.7,8.8,7.5,
+                        17.5,14.8,12.8,11.2,9.9]
 
         self.rootFile = ROOT.TFile.Open(fileName)
         if not self.rootFile:
             print 'File not found',fileName
             sys.exit(1)
         self.lumi = 5800
+#        self.lumi = 7140
         self.outFile = ROOT.TFile.Open('output.root','RECREATE')
         self.effHists = [ROOT.TH2F('h_eff_SR'+str(i),'h_eff_SR'+str(i),57,587.5,2012.5,9,-50,1750) for i in range(1,21)]
         self.yieldHists = []
@@ -189,7 +189,6 @@ class interpolator:
 
 parser = argparse.ArgumentParser(add_help=False, description='Plot Yields')
 parser.add_argument('input')
-parser.add_argument('--model',dest='model',type=str,default='RPV10')
 args = parser.parse_args()
 foo = interpolator(args.input)    
 foo.makeLimitHist(14,0.15)
@@ -239,7 +238,7 @@ for i in range(len(hists_m4_b1)):
         hists_m4_b1[i].Draw('L')
 
 ROOT.ATLASLabel(0.2,0.85,'Internal')
-lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 4}{b-tag}')
 leg.Draw()
 
@@ -261,7 +260,7 @@ for i in range(len(hists_m4_b9)):
         hists_m4_b9[i].Draw('L')
 
 ROOT.ATLASLabel(0.2,0.85,'Internal')
-lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 4}{b-inclusive}')
 leg.Draw()
 
@@ -281,7 +280,7 @@ for i in range(len(hists_m5_b1)):
         hists_m5_b1[i].Draw('L')
 
 ROOT.ATLASLabel(0.2,0.85,'Internal')
-lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 5}{b-tag}')
 leg.Draw()
 
@@ -300,7 +299,7 @@ for i in range(len(hists_m5_b9)):
     else:
         hists_m5_b9[i].Draw('L')
 ROOT.ATLASLabel(0.2,0.85,'Internal')
-lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.75,0.5,'#splitline{n_{jet}#geq 5}{b-inclusive}')
 leg.Draw()
 
@@ -313,30 +312,59 @@ foo.limit_1down.SetFillColor(10)
 foo.limit_1down.Draw('Fsame')
 foo.limit_nom.Draw('lsame')
 ROOT.ATLASLabel(0.2,0.85,'Internal')
-lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 lumiLatex.DrawLatexNDC(0.65,0.4,'#splitline{#splitline{n_{jet}#geq 5}{b-tag}}{MJ > 800 GeV}')
 line = ROOT.TLine()
 line.SetLineColor(ROOT.kWhite)
 line.SetLineWidth(3)
-line.DrawLine(1000,268.882177216,1000,828.200665761)
-line.DrawLine(1000,828.200665761,1006.35299758,850)
-x1  =1006.35299758
-y1 = 850
-x3 = 1200.0
-y3 = 946.644554518
-x2 = 1190
-y2=y1+(x2-x1)*(y3-y1)/(x3-x1)
+#line.DrawLine(1000,200,1000,800)
 
+#line.DrawLine(1000,268.882177216,1000,828.200665761)
+#line.DrawLine(1000,828.200665761,1006.35299758,850)
+#x1  =1006.35299758
+#y1 = 850
+#x3 = 1200.0
+#y3 = 946.644554518
+#x2 = 1190
+x1=1000.0
+y1=238.028
+x3=1200.0
+y3=975.051254841
+x2=1186
+y2=y1+(x2-x1)*(y3-y1)/(x3-x1)
 
 line.SetLineColor(ROOT.kWhite)
 line.DrawLine(x1,y1,x2,y2)
 
+#3 sigma
+#c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m4_b1_dy14_3sigma.pdf')
+#c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m4_b9_dy14_3sigma.pdf')
+#c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b1_dy14_3sigma.pdf')
+#c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b9_dy14_3sigma.pdf')
+#c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b1_dy14_mj800_3sigma_1sigmaband.pdf')
 
-c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/each_RPV10_m4_b1_dy14_95CL.pdf')
-c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m4_b9_dy14_95CL.pdf')
-c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b1_dy14_95CL.pdf')
-c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b9_dy14_95CL.pdf')
-c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_22_5p8fb/reach_RPV10_m5_b1_dy14_mj800_95CL_1sigmaband.pdf')
+#95% CL
+#c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m4_b1_dy14_95CL.pdf')
+#c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m4_b9_dy14_95CL.pdf')
+#c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b1_dy14_95CL.pdf')
+#c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b9_dy14_95CL.pdf')
+#c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_5p8fb/reach_RPV10_m5_b1_dy14_mj800_95CL_1sigmaband.pdf')
+
+
+#3 sigma
+#c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m4_b1_dy14_3sigma.pdf')
+#c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m4_b9_dy14_3sigma.pdf')
+#c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b1_dy14_3sigma.pdf')
+#c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b9_dy14_3sigma.pdf')
+#c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b1_dy14_mj800_3sigma_1sigmaband.pdf')
+
+#95% CL
+c1.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m4_b1_dy14_95CL.pdf')
+c2.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m4_b9_dy14_95CL.pdf')
+c3.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b1_dy14_95CL.pdf')
+c4.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b9_dy14_95CL.pdf')
+c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/06_28_7p14fb/reach_RPV10_m5_b1_dy14_mj800_95CL_1sigmaband.pdf')
+
 
 # c5 = ROOT.TCanvas('c5','c5',800,600)
 # foo.limit_2up.Draw('AFL')
@@ -356,5 +384,5 @@ c5.Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots
 # foo.limit_2up.GetYaxis().SetTitle('m_{#tilde{#chi}} [GeV]')
 
 # ROOT.ATLASLabel(0.2,0.85,'Internal')
-# lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+# lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 7.1 fb^{-1}')
 # lumiLatex.DrawLatexNDC(0.7,0.3,'#splitline{#splitline{n_{jet}#geq 5}{b-tag}}{MJ > 800 GeV}')

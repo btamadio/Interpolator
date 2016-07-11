@@ -2,13 +2,16 @@
 import argparse,ROOT,sys,pprint,array
 from pointDict import pointDict
 from massDict import massDict
+import subprocess
 class interpolator:
     def __init__(self,fileName):
         #Number of events needed for 3sigma observation
-        #self.contours = [43.1,30.3,23.9,18.2,13.8,68.0,48.9,36.0,27.5,20.5,10.0,7.5,6.1,4.4,3.7,14.9,11.0,9.1,7.1,5.7]
-        #RPV6: optimized SR is nJet >= 5, b-tag, MJ > 600
-        #this corresponds to self.contours[10] = 9.6
-        self.contours = [74.4,48.5,33.4,23.8,17.8,157.2,99.2,68.0,47.1,32.6,9.6,8.0,6.0,4.2,2.8,16.1,13.0,10.6,8.1,6.6]
+        #self.contours =[ 50.9, 40.9, 30.5, 24.2, 19.6, 85.6, 66.0, 48.0, 37.6, 30.4, 11.5, 9.4, 7.5, 6.1, 4.4, 17.3, 13.9, 11.5, 9.5, 7.7]
+        #number of events needed for 95%CL exclusion
+        self.contours =[48.8,39.0,30.1,24.2,19.7,
+                        98.9,69.9,51.5,38.1,29.1,
+                        12.7,11.2,9.7,8.8,7.5,
+                        17.5,14.8,12.8,11.2,9.9]
         self.lines = []
         self.intersections = []
         self.rootFile = ROOT.TFile.Open(fileName)
@@ -22,15 +25,16 @@ class interpolator:
         self.h0 = [ROOT.TH1F('h0_'+str(i),'h0_'+str(i),57,587.5,2012.5) for i in range(1,21)]
         self.e0 = [ROOT.TH1F('e0_'+str(i),'e0_'+str(i),57,587.5,2012.5) for i in range(1,21)]
         for key in self.rootFile.GetListOfKeys():
-            if 'h_sigyield_dy_' in key.GetName():
+            if 'h_SRyield_' in key.GetName() and 'unweighted' not in key.GetName():
                 sList = key.GetName().split('_')
                 dsid = int(sList[-1])
+                print dsid
                 h = self.rootFile.Get(key.GetName())
                 cutflow = self.rootFile.Get('h_cutflow_'+str(dsid))
                 mG = pointDict[dsid][0]
                 for i in range(20):
                     self.effHists[i].Fill(mG,h.GetBinContent(i+1)/cutflow.GetBinContent(2))
-                    self.e0[i].Fill(mG,h.GetBinContent(i+1)/cutflow.GetBinContent(1))
+                    self.e0[i].Fill(mG,h.GetBinContent(i+1)/cutflow.GetBinContent(2))
                     self.h0[i].Fill(mG,h.GetBinContent(i+1))
         for effHist in self.effHists:
             effHist.GetXaxis().SetTitle('m_{#tilde{g}} [GeV]')
@@ -114,7 +118,6 @@ class interpolator:
                 
 parser = argparse.ArgumentParser(add_help=False, description='Plot Yields')
 parser.add_argument('input')
-parser.add_argument('--model',dest='model',type=str,default='RPV6')
 args = parser.parse_args()
 foo = interpolator(args.input)    
 foo.write()
@@ -168,8 +171,9 @@ for i in range(len(foo.yieldHists)):
         lumiLatex.DrawLatexNDC(0.75,0.5,catlab[j-1])
         leg.Draw()
 
-
-#c[0].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/reach_RPV6_m4_b1_dy14_5p8fb.pdf')
-#c[1].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/reach_RPV6_m4_b9_dy14_5p8fb.pdf')
-#c[2].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/reach_RPV6_m5_b1_dy14_5p8fb.pdf')
-#c[3].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/reach_RPV6_m5_b9_dy14_5p8fb.pdf')
+for suffix in ['.pdf','.png','.C']:
+    c[0].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m4_b1_95CL'+suffix)
+    c[1].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m4_b9_95CL'+suffix)
+    c[2].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m5_b1_95CL'+suffix)
+    c[3].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m5_b9_95CL'+suffix)
+subprocess.call('chmod a+r /global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/*',shell=True)
