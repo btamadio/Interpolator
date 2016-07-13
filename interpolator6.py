@@ -8,17 +8,23 @@ class interpolator:
         #Number of events needed for 3sigma observation
         #self.contours =[ 50.9, 40.9, 30.5, 24.2, 19.6, 85.6, 66.0, 48.0, 37.6, 30.4, 11.5, 9.4, 7.5, 6.1, 4.4, 17.3, 13.9, 11.5, 9.5, 7.7]
         #number of events needed for 95%CL exclusion
-        self.contours =[48.8,39.0,30.1,24.2,19.7,
-                        98.9,69.9,51.5,38.1,29.1,
-                        12.7,11.2,9.7,8.8,7.5,
-                        17.5,14.8,12.8,11.2,9.9]
+        #baseline CR:
+#        self.contours =[48.8,39.0,30.1,24.2,19.7,
+#                        98.9,69.9,51.5,38.1,29.1,
+#                        12.7,11.2,9.7,8.8,7.5,
+#                        17.5,14.8,12.8,11.2,9.9]
+        #sofjet CR
+        self.contours = [81.0, 57.8, 44.4, 33.8, 28.7, 
+                         189.0, 119.6, 82.5, 57.8, 43.3, 
+                         13.2, 11.4, 9.7, 8.9, 8.1, 23.2, 
+                         19.5, 15.9, 13.0, 11.5]
         self.lines = []
         self.intersections = []
         self.rootFile = ROOT.TFile.Open(fileName)
         if not self.rootFile:
             print 'File not found',fileName
             sys.exit(1)
-        self.lumi = 5800
+        self.lumi = 8900
         self.outFile = ROOT.TFile.Open('output_rpv6.root','RECREATE')
         self.effHists = [ROOT.TH1F('h_eff_SR'+str(i),'h_eff_SR'+str(i),57,587.5,2012.5) for i in range(1,21)]
         self.yieldHists = []
@@ -167,13 +173,15 @@ for i in range(len(foo.yieldHists)):
 
     if i%5 ==0:
         ROOT.ATLASLabel(0.2,0.85,'Internal')
-        lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = 5.8 fb^{-1}')
+        lumiLatex.DrawLatexNDC(0.2,0.75,'#int L dt = '+str(foo.lumi/1000.)+' fb^{-1}')
         lumiLatex.DrawLatexNDC(0.75,0.5,catlab[j-1])
         leg.Draw()
 
+        lumiStr = str(foo.lumi/1000.).split('.')[0]+'p'+str(foo.lumi/1000.).split('.')[1]
+subprocess.call('mkdir -p /global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/*',shell=True)
 for suffix in ['.pdf','.png','.C']:
-    c[0].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m4_b1_95CL'+suffix)
-    c[1].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m4_b9_95CL'+suffix)
-    c[2].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m5_b1_95CL'+suffix)
-    c[3].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/reach_RPV6_m5_b9_95CL'+suffix)
-subprocess.call('chmod a+r /global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_07_5p8fb/*',shell=True)
+    c[0].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/reach_RPV6_m4_b1_95CL'+suffix)
+    c[1].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/reach_RPV6_m4_b9_95CL'+suffix)
+    c[2].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/reach_RPV6_m5_b1_95CL'+suffix)
+    c[3].Print('/global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/reach_RPV6_m5_b9_95CL'+suffix)
+subprocess.call('chmod a+r /global/project/projectdirs/atlas/www/multijet/RPV/btamadio/ReachPlots/07_12_'+lumiStr+'fb_alternateCR/*',shell=True)
